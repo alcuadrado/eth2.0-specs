@@ -6,17 +6,10 @@ const fsExtra = require("fs-extra");
 usePlugin("@nomiclabs/buidler-vyper");
 usePlugin("@nomiclabs/buidler-truffle5");
 
-function replaceConstant(code, constant, value) {
-  const regexp = new RegExp(
-    "^(" + constant + ".*?=\\s*)(\\S+?)([#\\s].*)$",
-    "m"
-  );
-
-  return code.replace(
-    regexp,
-    (_, biginning, __, ending) => biginning + value + ending
-  );
-}
+// Set the paths to where the ABI and bytecode should be copied.
+// If left blank, they won't be copied.
+const ABI_PATH = "";
+const BYTECODE_PATH = "";
 
 const ARG_TO_CONSTANT = {
   minDepositAmount: "MIN_DEPOSIT_AMOUNT",
@@ -27,6 +20,25 @@ const ARG_TO_CONSTANT = {
   maxDepositCount: "MAX_DEPOSIT_COUNT",
   amountLength: "AMOUNT_LENGTH"
 };
+
+task("compile").setAction(async (_, { config }, runSuper) => {
+  await runSuper();
+
+  const artifact = await readArtifact(
+    config.paths.artifacts,
+    "validator_registration"
+  );
+
+  if (ABI_PATH) {
+    await fsExtra.ensureDir(path.dirname(ABI_PATH));
+    await fsExtra.writeJSON(ABI_PATH, artifact.abi);
+  }
+
+  if (BYTECODE_PATH) {
+    await fsExtra.ensureDir(path.dirname(BYTECODE_PATH));
+    await fsExtra.writeFile(BYTECODE_PATH, artifact.bytecode, "utf8");
+  }
+});
 
 function addReplacementParameters(taskDefinition) {
   return taskDefinition
@@ -92,30 +104,12 @@ taskWithReplacementParameters(
   await fsExtra.writeFile(contractPath, sourceCode, "utf8");
 });
 
-const ABI_PATH = "";
-const BYTECODE_PATH = "";
-
 taskWithReplacementParameters(
   "replace-and-compile",
   "Replaces the constants of the validator_registration and compiles the contracts"
-).setAction(async (args, { run, config }) => {
+).setAction(async (args, { run }) => {
   await run("replace-constants", args);
   await run("compile");
-
-  const artifact = await readArtifact(
-    config.paths.artifacts,
-    "validator_registration"
-  );
-
-  if (ABI_PATH) {
-    await fsExtra.ensureDir(path.dirname(ABI_PATH));
-    await fsExtra.writeJSON(ABI_PATH, artifact.abi);
-  }
-
-  if (BYTECODE_PATH) {
-    await fsExtra.ensureDir(path.dirname(BYTECODE_PATH));
-    await fsExtra.writeFile(BYTECODE_PATH, artifact.bytecode, "utf8");
-  }
 });
 
 taskWithReplacementParameters(
@@ -129,5 +123,17 @@ taskWithReplacementParameters(
   validatorRegistration = await ValidatorRegistration.new();
   console.log("Contract deployed to", validatorRegistration.address);
 });
+
+function replaceConstant(code, constant, value) {
+  const regexp = new RegExp(
+    "^(" + constant + ".*?=\\s*)(\\S+?)([#\\s].*)$",
+    "m"
+  );
+
+  return code.replace(
+    regexp,
+    (_, biginning, __, ending) => biginning + value + ending
+  );
+}
 
 module.exports = {};
