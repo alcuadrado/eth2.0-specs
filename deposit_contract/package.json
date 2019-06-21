@@ -1,0 +1,15 @@
+{
+  "name": "deposit_contract",
+  "version": "1.0.0",
+  "devDependencies": {
+    "@nomiclabs/buidler": "^1.0.0-beta.8",
+    "@nomiclabs/buidler-truffle5": "^1.0.0-beta.8",
+    "@nomiclabs/buidler-vyper": "^1.0.0-beta.1",
+    "@nomiclabs/buidler-web3": "^1.0.0-beta.8",
+    "@types/fs-extra": "^7.0.0",
+    "fs-extra": "^8.0.1"
+  },
+  "dependencies": {
+    "fp-ts": "^1.19.0"
+  }
+}
